@@ -1,0 +1,40 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: hello-world-
+  namespace: argo
+spec:
+  entrypoint: hello-world
+  templates:
+    - name: hello-world
+      steps:
+        - - name: step1
+            template: print-message
+            arguments:
+              parameters:
+                - name: message
+                  value: "Hello from Step 1"
+        - - name: step2a
+            template: print-message
+            arguments:
+              parameters:
+                - name: message
+                  value: "Hello from Step 2a (parallel)"
+          - name: step2b
+            template: print-message
+            arguments:
+              parameters:
+                - name: message
+                  value: "Hello from Step 2b (parallel)"
+    - name: print-message
+      inputs:
+        parameters:
+          - name: message
+      container:
+        image: alpine:latest
+        command: [echo]
+        args: ["{{inputs.parameters.message}}"]
+        resources:
+          requests:
+            cpu: 50m
+            memory: 32Mi
