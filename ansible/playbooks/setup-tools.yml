@@ -1,0 +1,70 @@
+---
+- name: Install cloud-native lab tools
+  hosts: local
+  become: false
+  tasks:
+    - name: Install Helm
+      shell: |
+        curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+      args:
+        creates: /usr/local/bin/helm
+
+    - name: Install kubectl
+      shell: |
+        curl -LO "https://dl.k8s.io/release/$(curl -sL https://dl.k8s.io/release/stable.txt)/bin/darwin/amd64/kubectl"
+        chmod +x kubectl && mv kubectl /usr/local/bin/kubectl
+      args:
+        creates: /usr/local/bin/kubectl
+
+    - name: Install kind
+      shell: |
+        curl -Lo ./kind https://kind.sigs.k8s.io/dl/latest/kind-darwin-amd64
+        chmod +x ./kind && mv ./kind /usr/local/bin/kind
+      args:
+        creates: /usr/local/bin/kind
+
+    - name: Install istioctl
+      shell: |
+        curl -L https://istio.io/downloadIstio | sh -
+        mv istio-*/bin/istioctl /usr/local/bin/istioctl
+        rm -rf istio-*
+      args:
+        creates: /usr/local/bin/istioctl
+
+    - name: Install Cilium CLI
+      shell: |
+        CILIUM_CLI_VERSION=$(curl -s https://raw.githubusercontent.com/cilium/cilium-cli/main/stable.txt)
+        curl -L --remote-name-all \
+          https://github.com/cilium/cilium-cli/releases/download/${CILIUM_CLI_VERSION}/cilium-darwin-amd64.tar.gz
+        tar xzvf cilium-darwin-amd64.tar.gz
+        mv cilium /usr/local/bin/cilium
+        rm cilium-darwin-amd64.tar.gz
+      args:
+        creates: /usr/local/bin/cilium
+
+    - name: Install ArgoCD CLI
+      shell: |
+        curl -sSL -o argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-darwin-amd64
+        chmod +x argocd && mv argocd /usr/local/bin/argocd
+      args:
+        creates: /usr/local/bin/argocd
+
+    - name: Install Argo Rollouts kubectl plugin
+      shell: |
+        curl -LO https://github.com/argoproj/argo-rollouts/releases/latest/download/kubectl-argo-rollouts-darwin-amd64
+        chmod +x kubectl-argo-rollouts-darwin-amd64
+        mv kubectl-argo-rollouts-darwin-amd64 /usr/local/bin/kubectl-argo-rollouts
+      args:
+        creates: /usr/local/bin/kubectl-argo-rollouts
+
+    - name: Print installed versions
+      shell: |
+        echo "helm:      $(helm version --short)"
+        echo "kubectl:   $(kubectl version --client --short 2>/dev/null)"
+        echo "kind:      $(kind version)"
+        echo "istioctl:  $(istioctl version --remote=false 2>/dev/null)"
+        echo "cilium:    $(cilium version 2>/dev/null | head -1)"
+        echo "argocd:    $(argocd version --client --short 2>/dev/null)"
+      register: versions
+    - debug:
+        msg: "{{ versions.stdout_lines }}"

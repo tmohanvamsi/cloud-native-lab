@@ -1,0 +1,31 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: demo-app
+  namespace: mesh
+spec:
+  hosts:
+    - demo-app
+  http:
+    - match:
+        - headers:
+            x-canary:
+              exact: "true"
+      route:
+        - destination:
+            host: demo-app
+            subset: v2
+    - route:
+        - destination:
+            host: demo-app
+            subset: v1
+          weight: 90
+        - destination:
+            host: demo-app
+            subset: v2
+          weight: 10
+      fault:
+        delay:
+          percentage:
+            value: 10
+          fixedDelay: 5s

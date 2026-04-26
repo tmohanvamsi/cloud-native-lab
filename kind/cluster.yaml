@@ -1,0 +1,38 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: cloudnative
+networking:
+  disableDefaultCNI: true
+  kubeProxyMode: none
+nodes:
+  - role: control-plane
+    kubeadmConfigPatches:
+      - |
+        kind: InitConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "ingress-ready=true"
+    extraPortMappings:
+      - containerPort: 80
+        hostPort: 80
+        protocol: TCP
+      - containerPort: 443
+        hostPort: 443
+        protocol: TCP
+      - containerPort: 8080
+        hostPort: 8080
+        protocol: TCP
+      - containerPort: 3000
+        hostPort: 3000
+        protocol: TCP
+      - containerPort: 9090
+        hostPort: 9090
+        protocol: TCP
+      - containerPort: 4040
+        hostPort: 4040
+        protocol: TCP
+      - containerPort: 16686
+        hostPort: 16686
+        protocol: TCP
+  - role: worker
+  - role: worker

@@ -1,0 +1,10 @@
+# Local secrets — never commit these
+.env.local
+*.env
+secrets/
+
+# Vagrant
+vagrant/.vagrant/
+
+# OS
+.DS_Store
