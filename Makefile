@@ -20,7 +20,7 @@ BACKSTAGE_NS   := backstage
         vagrant-up vagrant-ssh vagrant-destroy \
         lab-lfcs lab-cca lab-capa lab-cgoa lab-cba lab-otca \
         lab-pca lab-ica lab-kca lab-cnpe lab-cnpa \
-        full-stack clean
+        full-stack stop resume close open clean
 
 help:
 	@echo ""
@@ -180,6 +180,7 @@ monitoring-install:
 		--wait --timeout 5m
 	$(HELM) upgrade --install loki grafana/loki \
 		--namespace $(MONITORING_NS) \
+		--set deploymentMode=SingleBinary \
 		--set loki.auth_enabled=false \
 		--set loki.commonConfig.replication_factor=1 \
 		--set loki.storage.type=filesystem \
@@ -311,6 +312,51 @@ lab-cnpa:
 	@cat labs/cnpa/README.md
 
 # ─── SHORTCUTS ───────────────────────────────────────────────────────────────
+
+close:
+	@echo "Stopping all port-forwards..."
+	@pkill -f "kubectl port-forward" 2>/dev/null || true
+	@pkill -f "argo rollouts dashboard" 2>/dev/null || true
+	@echo "Saving cluster state by pausing Docker containers..."
+	@docker stop $$(docker ps -q --filter "name=cloudnative") 2>/dev/null || true
+	@echo "Cluster saved. Safe to quit Docker Desktop now."
+
+open:
+	@echo "Starting Docker containers..."
+	@docker start $$(docker ps -aq --filter "name=cloudnative") 2>/dev/null || true
+	@echo "Waiting for cluster to be ready..."
+	@sleep 10
+	@kubectl wait --for=condition=Ready nodes --all --timeout=60s
+	@echo "Starting all port-forwards..."
+	@kubectl port-forward svc/hubble-ui -n kube-system 12000:80 &
+	@kubectl port-forward svc/argocd-server -n argocd 8080:443 &
+	@kubectl port-forward svc/argo-server -n argo 2746:2746 &
+	@kubectl port-forward svc/kube-prometheus-stack-grafana -n monitoring 3000:80 &
+	@kubectl argo rollouts dashboard -n apps &
+	@sleep 3
+	@echo ""
+	@echo "All UIs ready:"
+	@echo "  Hubble      → http://localhost:12000"
+	@echo "  ArgoCD      → https://localhost:8080"
+	@echo "  Argo WF     → https://localhost:2746"
+	@echo "  Rollouts    → http://localhost:3100"
+	@echo "  Grafana     → http://localhost:3000  (admin / Kube\$$tr0naut#2026!)"
+
+resume:
+	@echo "Starting all port-forwards in background..."
+	kubectl port-forward svc/hubble-ui -n kube-system 12000:80 &
+	kubectl port-forward svc/argocd-server -n argocd 8080:443 &
+	kubectl port-forward svc/argo-server -n argo 2746:2746 &
+	kubectl port-forward svc/kube-prometheus-stack-grafana -n monitoring 3000:80 &
+	kubectl argo rollouts dashboard -n apps &
+	@sleep 3
+	@echo ""
+	@echo "All UIs ready:"
+	@echo "  Hubble      → http://localhost:12000"
+	@echo "  ArgoCD      → https://localhost:8080"
+	@echo "  Argo WF     → https://localhost:2746"
+	@echo "  Rollouts    → http://localhost:3100"
+	@echo "  Grafana     → http://localhost:3000  (admin / Kube\$$tr0naut#2026!)"
 
 full-stack: cluster-create cilium-install argo-install monitoring-install otel-install kyverno-install
 	@echo ""
