@@ -11,7 +11,7 @@ alertmanager:
 grafana:
   enabled: true
   replicas: 1
-  adminPassword: "${GRAFANA_ADMIN_PASSWORD}"  # set via .env.local — never commit real passwords
+  adminPassword: "CHANGE_ME"  # set a strong password before deploying
   service:
     type: NodePort
     nodePort: 30300

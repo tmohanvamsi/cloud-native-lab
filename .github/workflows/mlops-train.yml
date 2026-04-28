@@ -1,0 +1,70 @@
+name: MLOps — Train and Evaluate
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'mlops/**'
+      - 'mlops/params.yaml'
+  pull_request:
+    paths:
+      - 'mlops/**'
+  workflow_dispatch:
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r mlops/requirements.txt
+
+      - name: Set up DVC
+        run: |
+          dvc remote add -d local /tmp/dvc-store
+          dvc remote modify local type local
+
+      - name: Run DVC pipeline
+        run: dvc repro mlops/dvc.yaml
+
+      - name: Show metrics
+        run: dvc metrics show
+
+      - name: Upload metrics as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-metrics
+          path: metrics/
+
+      - name: Upload model as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: trained-model
+          path: models/model.pkl
+
+      - name: Comment metrics on PR
+        if: github.event_name == 'pull_request'
+        uses: iterative/setup-cml@v2
+        env:
+          REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          version: latest
+
+      - name: Post metrics report
+        if: github.event_name == 'pull_request'
+        env:
+          REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cml comment create --publish << EOF
+          ## Model Metrics
+          $(dvc metrics show --md)
+          EOF

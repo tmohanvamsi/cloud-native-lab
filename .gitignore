@@ -6,5 +6,34 @@ secrets/
 # Vagrant
 vagrant/.vagrant/
 
+# Terraform
+**/.terraform/
+**/terraform.tfstate
+**/terraform.tfstate.backup
+**/.terraform.lock.hcl
+
+# kubeconfig backups
+*.kubeconfig
+kubeconfig
+
+# Helm chart caches
+charts/
+*.tgz
+
+# MLOps — generated files (tracked by DVC, not Git)
+data/
+models/
+metrics/
+mlops/.dvc/cache/
+.dvc/cache/
+.dvc/tmp/
+
 # OS
 .DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo

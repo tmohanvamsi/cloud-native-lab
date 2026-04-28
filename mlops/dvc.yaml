@@ -1,0 +1,38 @@
+stages:
+  prepare:
+    cmd: python mlops/prepare.py
+    deps:
+      - mlops/prepare.py
+    params:
+      - mlops/params.yaml:
+          - data
+    outs:
+      - data/train.csv
+      - data/test.csv
+
+  train:
+    cmd: python mlops/train.py
+    deps:
+      - mlops/train.py
+      - data/train.csv
+    params:
+      - mlops/params.yaml:
+          - model
+    outs:
+      - models/model.pkl
+    metrics:
+      - metrics/train_metrics.json:
+          cache: false
+
+  evaluate:
+    cmd: python mlops/evaluate.py
+    deps:
+      - mlops/evaluate.py
+      - models/model.pkl
+      - data/test.csv
+    metrics:
+      - metrics/eval_metrics.json:
+          cache: false
+    plots:
+      - metrics/confusion_matrix.csv:
+          cache: false
