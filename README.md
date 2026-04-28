@@ -31,6 +31,7 @@ A hands-on lab covering 11 Cloud Native Foundation certifications — running en
 | Policy | Kyverno |
 | Developer Portal | Backstage (Docker) |
 | Linux VM | Vagrant + Ubuntu 22.04 (LFCS) |
+| MLOps | DVC + GitHub Actions + FastAPI model server |
 
 ## Prerequisites
 
@@ -44,7 +45,14 @@ Install all tools:
 make ansible-tools
 ```
 
-## Quick Start
+## Daily Usage
+
+```bash
+make open     # start of day — restarts cluster + all port-forwards
+make close    # end of day — stops port-forwards + saves cluster state
+```
+
+## Quick Start (first time)
 
 ```bash
 make full-stack           # cluster + cilium + argo + monitoring + otel + istio + kyverno
@@ -70,9 +78,38 @@ make vagrant-up           # Linux VM for LFCS
 | ------- | --- | ----------- |
 | Grafana | <http://localhost:3000> | admin / see .env.local |
 | ArgoCD | <http://localhost:8080> | admin / `make argo-password` |
+| Argo Workflows | <https://localhost:2746> | none |
+| Argo Rollouts | <http://localhost:3100> | none |
 | Kiali | <http://localhost:20001> | anonymous |
 | Hubble | <http://localhost:12000> | none |
 | Backstage | <http://localhost:7007> | none |
+
+## Learning Roadmap
+
+| Day | Topics | Certs |
+| --- | ------ | ----- |
+| Day 1 ✅ | Cilium L7 policies, Hubble, Argo Rollouts canary, Argo Workflows DAG, Grafana + Loki | CCA, CAPA, PCA |
+| Day 2 | PromQL recording/alerting rules, OTel collector, traces in Tempo | PCA, OTCA |
+| Day 3 | Istio VirtualService, fault injection, circuit breaker, Kiali | ICA |
+| Day 4 | Kyverno generate, mutate, verify-image, PolicyReport | KCA |
+| Day 5 | Backstage catalog + templates, LFCS Linux VM, Platform Engineering | CBA, LFCS, CNPE, CNPA |
+| Day 6 | MLOps: DVC pipeline, GitHub Actions CI/CD, model deploy to K8s | MLOps/AIOps |
+
+## MLOps Pipeline (Day 6)
+
+```bash
+# Local run
+pip install -r mlops/requirements.txt
+dvc repro mlops/dvc.yaml          # prepare → train → evaluate
+dvc metrics show                   # print accuracy
+
+# GitHub Actions (automatic on push)
+# mlops-train.yml  → trains model, posts metrics on PR
+# mlops-deploy.yml → builds Docker image, pushes to GHCR, deploys to K8s
+
+# GitHub secrets needed before Day 6
+# KUBECONFIG = cat ~/.kube/config | base64
+```
 
 ## Tear down
 
@@ -81,10 +118,6 @@ make clean
 docker stop backstage && docker rm backstage
 make vagrant-destroy
 ```
-
-## Learn interactively
-
-See [LEARN.md](LEARN.md) for a step-by-step guided walkthrough of every tool.
 
 ## Related
 
