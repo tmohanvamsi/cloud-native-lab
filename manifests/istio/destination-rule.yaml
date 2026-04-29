@@ -2,7 +2,7 @@ apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule
 metadata:
   name: demo-app
-  namespace: mesh
+  namespace: default
 spec:
   host: demo-app
   trafficPolicy:

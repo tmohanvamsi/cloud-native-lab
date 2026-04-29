@@ -2,7 +2,7 @@ apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
   name: demo-app
-  namespace: mesh
+  namespace: default
 spec:
   hosts:
     - demo-app
