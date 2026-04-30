@@ -19,14 +19,17 @@ Pod A                          Pod B
               (the control plane)
 ```
 
-Your app knows nothing about this. Envoy handles everything transparently. (2/2 READY = app + sidecar)
+Your app knows nothing about this. Envoy handles everything transparently.
+`2/2 READY` on a pod = app container + Envoy sidecar.
 
 ---
 
 ### VirtualService — Traffic Cop
 
 **What it is:** Routing rules that tell Envoy where to send traffic.
+
 **Real world:** Canary deploy — send 10% to v2, watch for errors, bump to 50%, then 100%. No redeploy needed.
+
 **Analogy:** A roundabout officer — "9 of every 10 cars go left, 1 goes right."
 
 ```text
@@ -38,12 +41,16 @@ VirtualService
     └── default: 90% → v1 / 10% → v2
 ```
 
+**What we proved:** Applied 90/10 weight split, watched it in Kiali graph. Also routed `x-canary: true` header always to v2 — zero code change in the app.
+
 ---
 
 ### DestinationRule — Rules for a Specific Destination
 
 **What it is:** Defines subsets (v1/v2) and policies like circuit breaker, connection pool, TLS.
-**Real world:** Works hand-in-hand with VirtualService — VS says "send 10% to v2", DR says "v2 means pods with label version=v2".
+
+**Real world:** Works hand-in-hand with VirtualService — VS says "send 10% to v2", DR says "v2 means pods with label `version=v2`".
+
 **Analogy:** The rulebook for each lane — speed limit, max cars, what to do if a car breaks down.
 
 ---
@@ -51,71 +58,144 @@ VirtualService
 ### Fault Injection — Break Things on Purpose
 
 **What it is:** Istio deliberately delays or fails requests — without touching app code at all.
-**What we did:** 50% of requests got a 3s delay, 20% got a 503 error returned immediately.
-**Real world:** Chaos engineering — test whether your frontend handles slow backends gracefully before prod does.
-**Analogy:** A fire drill. Not a real fire — but testing whether people know what to do.
+
+**What we proved:** 50% of requests got a 3s delay, 20% got a 503 error. Saw alternating fast/slow responses in the output.
+
+**Real world:** Chaos engineering — test whether your frontend handles slow backends gracefully before production does.
+
+**Analogy:** A fire drill. Not a real fire — but testing whether people know what to do when it happens.
 
 ```text
 Request → Envoy → [50% chance: wait 3s] → [20% chance: return 503] → app
 ```
+
+**Key insight:** The app never knows faults are injected — it only happens inside Envoy. This lets you test resilience patterns (timeouts, retries, fallbacks) without changing a single line of code.
 
 ---
 
 ### Circuit Breaker (outlierDetection) — Auto-eject Bad Pods
 
 **What it is:** If a pod keeps returning errors, Envoy stops sending traffic to it automatically.
-**What we configured:** After 3 consecutive 5xx from a pod → eject it for 30s. Max 50% ejected at once.
-**Real world:** One pod has a memory leak and starts returning 500s. Istio detects it and routes around it while a healthy pod spins up.
+
+**What we configured:**
+
+- After 3 consecutive 5xx from a pod → eject it from the pool
+- Ejection lasts 30s, then the pod gets a chance to recover
+- Max 50% of pods ejected at once — prevents total service outage
+
+**Real world:** One pod has a memory leak and starts returning 500s. Istio detects it and routes around it while your HPA spins up a healthy replacement.
+
 **Analogy:** A supermarket checkout lane — if the register keeps breaking, the supervisor closes it and sends customers elsewhere. Tries reopening after 30 minutes.
 
 ---
 
 ### mTLS — Encrypted Pod-to-Pod Traffic
 
-**What it is:** All traffic between sidecars is automatically encrypted and mutually authenticated.
-**PERMISSIVE** = accepts both plain and mTLS traffic (migration mode)
-**STRICT** = only mTLS allowed — plain traffic rejected
-**Real world:** Even inside the cluster, traffic between services is encrypted. A rogue pod can't sniff traffic.
-**Analogy:** Every conversation in the office requires ID badges on both sides — no anonymous visitors.
+**What it is:** All traffic between Envoy sidecars is automatically encrypted (TLS) and mutually authenticated (both sides verify identity).
+
+**PERMISSIVE** = accepts both plain HTTP and mTLS (migration mode — default)
+
+**STRICT** = only mTLS allowed — plain HTTP connections are reset immediately
+
+**What we proved:**
+
+| Caller | Mode | Result |
+| --- | --- | --- |
+| Pod with sidecar | STRICT | 200 — Envoy handles mTLS transparently |
+| Pod without sidecar | STRICT | Connection reset — can't do mTLS handshake |
+
+**Real world:** Even inside the cluster, traffic between services is encrypted. A rogue pod that somehow gets onto the network can't sniff or MITM service-to-service calls.
+
+**Analogy:** Every conversation in the office requires ID badges shown on both sides — no anonymous visitors, no eavesdropping.
+
+**Kiali signal:** Lock icon on graph edges = mTLS active between those services.
 
 ---
 
 ### AuthorizationPolicy — Istio RBAC
 
-**What it is:** Allow/deny which service can call which other service, on which path, with which method.
-**Real world:** Only the `frontend` service can call `backend` on GET /api/* — no other service can reach it.
+**What it is:** Allow/deny which service can call which other service, on which HTTP path, with which method.
+
+**What we proved:**
+
+```text
+traffic-gen  (sa: default)  ── GET  ──► demo-app   ✅ 200
+traffic-gen  (sa: default)  ── POST ──► demo-app   ❌ 403
+stranger-pod (sa: stranger) ── GET  ──► demo-app   ❌ 403
+no-sidecar   (no mTLS)      ── GET  ──► demo-app   ❌ connection reset
+```
+
+**Pattern:** Always start with `deny-all` (empty spec), then add explicit ALLOW rules. This is defence-in-depth — nothing is reachable until you say so.
+
+**Real world:** Only the `frontend` service account can call `backend` on `GET /api/*`. The database service can only be reached by the `api` service. No lateral movement between microservices.
+
 **Analogy:** Office access control — the intern can enter the lobby but not the server room.
 
 ---
 
 ### Kiali — The Control Tower
 
-**What it is:** Live service mesh dashboard — nodes = services, edges = traffic between them.
-**What you see:** Traffic rates, error %, latency, circuit breaker icons, mTLS lock icons.
-**Analogy:** Air traffic control radar — every plane (service), every flight path (traffic), every plane in trouble (errors) in real time.
+**What it is:** Live service mesh dashboard — nodes = services, edges = live traffic between them.
+
+**What you see:**
+
+- Traffic rate (rps) on every edge
+- Error % highlighted in red/orange
+- Circuit breaker icon when outlierDetection is configured
+- Lock icon on edges when mTLS is active
+- Latency distribution per service
+
+**Analogy:** Air traffic control radar — every plane (service), every flight path (traffic), and every plane in trouble (errors) visible in real time.
+
+**Fix we hit:** Kiali defaults to looking for Prometheus at `prometheus.istio-system:9090`. Since ours is in the `monitoring` namespace, we patched it via:
+
+```bash
+helm upgrade kiali-server kiali/kiali-server --namespace istio-system \
+  --set external_services.prometheus.url="http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090"
+```
 
 ---
 
-### How They All Fit Together
+### Three Layers of Security — How They Stack
+
+```text
+Request arrives
+      │
+      ▼
+mTLS (PeerAuthentication)
+  └── No sidecar? → connection reset immediately
+      │
+      ▼
+AuthorizationPolicy
+  └── Wrong service account? → 403
+  └── Wrong HTTP method? → 403
+      │
+      ▼
+VirtualService / DestinationRule
+  └── Route to correct version, apply circuit breaker
+      │
+      ▼
+Your app pod — request finally arrives here
+```
+
+---
+
+### How All Traffic Features Fit Together
 
 ```text
 Request comes in
       │
       ▼
-VirtualService         ← which version? header match?
+VirtualService         ← which version? header match? fault to inject?
       │
       ▼
 DestinationRule        ← is this pod healthy? circuit breaker tripped?
-(circuit breaker)
       │
       ▼
-Fault Injection        ← should I add a delay or return an error? (if configured)
+mTLS (Envoy↔Envoy)     ← encrypt + mutually authenticate
       │
       ▼
-mTLS (Envoy↔Envoy)     ← encrypt + authenticate the connection
-      │
-      ▼
-AuthorizationPolicy    ← is this caller allowed to reach this service?
+AuthorizationPolicy    ← is this caller allowed for this method/path?
       │
       ▼
 Target pod (v1 / v2)   ← request finally arrives here
@@ -139,7 +219,7 @@ kubectl apply -f manifests/istio/
 # Verify sidecar injected — pods show 2/2 READY
 kubectl get pods -n default
 
-# Generate traffic — watch split in Kiali → Graph → default namespace
+# Generate continuous traffic — watch split in Kiali → Graph → default namespace
 kubectl run traffic-gen --image=curlimages/curl --restart=Never -n default -- \
   sh -c 'while true; do curl -s http://demo-app/get -o /dev/null; sleep 0.5; done'
 ```
@@ -149,13 +229,12 @@ kubectl run traffic-gen --image=curlimages/curl --restart=Never -n default -- \
 ```bash
 # x-canary: true always routes to v2
 kubectl exec -n default traffic-gen -- \
-  curl -s http://demo-app/get -H "x-canary: true" | python3 -m json.tool | grep -A2 headers
+  curl -s http://demo-app/get -H "x-canary: true" | python3 -m json.tool
 ```
 
 ## Lab 3 — Fault Injection
 
 ```bash
-# Apply: 50% requests get 3s delay, 20% get 503
 cat <<EOF | kubectl apply -f -
 apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
@@ -196,7 +275,6 @@ done
 ## Lab 4 — Circuit Breaker
 
 ```bash
-# Remove fault injection, apply outlierDetection
 cat <<EOF | kubectl apply -f -
 apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule
@@ -222,7 +300,7 @@ EOF
 # Kiali → Services → demo-app → shows circuit breaker icon
 ```
 
-## Lab 5 — mTLS (NEXT SESSION)
+## Lab 5 — mTLS STRICT
 
 ```bash
 # Enable STRICT mTLS for default namespace
@@ -237,21 +315,40 @@ spec:
     mode: STRICT
 EOF
 
-# Verify
-istioctl proxy-status
-istioctl x check-inject -n default
+# Pod without sidecar cannot connect
+kubectl run no-sidecar --image=curlimages/curl --restart=Never \
+  --annotations='sidecar.istio.io/inject=false' -n default -- \
+  curl -sv --max-time 5 http://demo-app/get
+# Result: "Recv failure: Connection reset by peer"
 
-# Kiali → Graph → edges show lock icon = mTLS active
+# Pod with sidecar still works
+kubectl exec -n default traffic-gen -- curl -s -o /dev/null -w "%{http_code}" http://demo-app/get
+# Result: 200
+
+# Kiali → Graph → lock icon on edges = mTLS active
+istioctl proxy-status
 ```
 
-## Lab 6 — AuthorizationPolicy (NEXT SESSION)
+## Lab 6 — AuthorizationPolicy
 
 ```bash
+# Step 1: deny everything
 cat <<EOF | kubectl apply -f -
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
-  name: allow-traffic-gen-only
+  name: deny-all
+  namespace: default
+spec: {}
+EOF
+# All requests → 403
+
+# Step 2: allow only traffic-gen (sa: default) → demo-app on GET
+cat <<EOF | kubectl apply -f -
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-traffic-gen
   namespace: default
 spec:
   selector:
@@ -261,11 +358,19 @@ spec:
   rules:
     - from:
         - source:
-            principals: ["cluster.local/ns/default/sa/default"]
+            principals:
+              - "cluster.local/ns/default/sa/default"
       to:
         - operation:
             methods: ["GET"]
 EOF
+
+# GET → 200, POST → 403, different service account → 403
+kubectl exec -n default traffic-gen -- \
+  curl -s -o /dev/null -w "%{http_code}" http://demo-app/get
+
+# Cleanup
+kubectl delete authorizationpolicy deny-all allow-traffic-gen -n default
 ```
 
 ## Key Concepts for ICA Exam
@@ -275,8 +380,10 @@ EOF
 | VirtualService | Routing rules — weights, headers, fault injection |
 | DestinationRule | Subsets + policies — circuit breaker, TLS, connection pool |
 | PeerAuthentication | mTLS enforcement — PERMISSIVE (both) vs STRICT (mTLS only) |
-| AuthorizationPolicy | Istio RBAC — from/to/when rules |
-| Kiali | Mesh topology, traffic health, mTLS lock icons |
-| Envoy sidecar | All pod traffic goes through it — app is unaware |
-| istiod | Control plane — pushes config to all Envoy sidecars |
-| demo profile | Install profile for learning — includes egress gateway |
+| AuthorizationPolicy | Istio RBAC — deny-all first, then explicit ALLOW rules |
+| Kiali | Mesh topology, error %, mTLS lock icons, circuit breaker icons |
+| Envoy sidecar | All pod traffic in/out goes through it — app is unaware |
+| istiod | Control plane — pushes xDS config to all Envoy sidecars |
+| 2/2 READY | App container + Envoy sidecar both running |
+| demo profile | Install profile for learning — includes ingress + egress gateways |
+| proxy-status | `istioctl proxy-status` — checks all sidecars are synced with istiod |

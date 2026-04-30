@@ -89,8 +89,8 @@ make vagrant-up           # Linux VM for LFCS
 | Day | Topics | Certs |
 | --- | ------ | ----- |
 | Day 1 ✅ | Cilium L7 policies, Hubble, Argo Rollouts canary, Argo Workflows DAG, Grafana + Loki | CCA, CAPA, PCA |
-| Day 2 | PromQL recording/alerting rules, OTel collector, traces in Tempo | PCA, OTCA |
-| Day 3 | Istio VirtualService, fault injection, circuit breaker, Kiali | ICA |
+| Day 2 ✅ | PromQL recording/alerting rules, AlertManager, OTel collector, traces in Tempo | PCA, OTCA |
+| Day 3 ✅ | Istio VirtualService, fault injection, circuit breaker, mTLS STRICT, AuthorizationPolicy, Kiali | ICA |
 | Day 4 | Kyverno generate, mutate, verify-image, PolicyReport | KCA |
 | Day 5 | Backstage catalog + templates, LFCS Linux VM, Platform Engineering | CBA, LFCS, CNPE, CNPA |
 | Day 6 | MLOps: DVC pipeline, GitHub Actions CI/CD, model deploy to K8s | MLOps/AIOps |
