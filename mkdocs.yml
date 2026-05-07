@@ -1,0 +1,17 @@
+site_name: Cloud Native Lab
+site_description: CNCF certification hands-on lab documentation
+docs_dir: docs
+
+nav:
+  - Home: index.md
+  - CCA - Cilium: cca.md
+  - KCA - Kyverno: kca.md
+  - ICA - Istio: ica.md
+  - OTCA - OpenTelemetry: otca.md
+  - PCA - Prometheus: pca.md
+  - CBA - Backstage: cba.md
+  - CNPE - Platform Engineering: cnpe.md
+  - LFCS - Linux: lfcs.md
+
+plugins:
+  - techdocs-core

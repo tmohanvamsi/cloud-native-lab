@@ -1,0 +1,91 @@
+---
+# The cloud-native-lab repo itself as a System
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: cloud-native-lab
+  description: CNCF certification hands-on lab environment
+  tags:
+    - kubernetes
+    - cncf
+    - learning
+spec:
+  owner: platform-team
+---
+# The platform team
+apiVersion: backstage.io/v1alpha1
+kind: Group
+metadata:
+  name: platform-team
+  description: Platform engineering team
+spec:
+  type: team
+  profile:
+    displayName: Platform Team
+  children: []
+---
+# CCA cert component
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: cilium-lab
+  description: Cilium CNI with eBPF + Hubble observability (CCA)
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+  tags:
+    - cilium
+    - networking
+    - cca
+spec:
+  type: library
+  lifecycle: experimental
+  owner: platform-team
+  system: cloud-native-lab
+---
+# KCA cert component
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: kyverno-lab
+  description: Kyverno policy engine - validate, mutate, generate (KCA)
+  tags:
+    - kyverno
+    - policy
+    - kca
+spec:
+  type: library
+  lifecycle: experimental
+  owner: platform-team
+  system: cloud-native-lab
+---
+# ICA cert component
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: istio-lab
+  description: Istio service mesh - traffic management, mTLS, RBAC (ICA)
+  tags:
+    - istio
+    - service-mesh
+    - ica
+spec:
+  type: library
+  lifecycle: experimental
+  owner: platform-team
+  system: cloud-native-lab
+---
+# OTCA cert component
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: otel-lab
+  description: OpenTelemetry collector + traces to Tempo (OTCA)
+  tags:
+    - opentelemetry
+    - tracing
+    - otca
+spec:
+  type: library
+  lifecycle: experimental
+  owner: platform-team
+  system: cloud-native-lab

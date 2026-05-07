@@ -1,0 +1,19 @@
+apiVersion: kyverno.io/v2
+kind: PolicyException
+metadata:
+  name: cert-manager-resource-limits
+  namespace: cert-manager
+spec:
+  exceptions:
+    - policyName: require-resource-limits
+      ruleNames:
+        - check-resource-limits
+        - autogen-check-resource-limits
+  match:
+    any:
+      - resources:
+          kinds:
+            - Deployment
+            - Pod
+          namespaces:
+            - cert-manager

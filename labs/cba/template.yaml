@@ -1,0 +1,80 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: new-lab-component
+  title: New Lab Component
+  description: Scaffold a new CNCF certification lab with catalog entry, README, and manifests folder
+  tags:
+    - cncf
+    - lab
+    - recommended
+spec:
+  owner: platform-team
+  type: lab
+
+  # Input form shown to the user in Backstage UI
+  parameters:
+    - title: Lab Details
+      required:
+        - name
+        - cert
+        - description
+      properties:
+        name:
+          title: Component Name
+          type: string
+          description: Short slug (e.g. "falco-lab")
+          pattern: '^[a-z0-9-]+$'
+        cert:
+          title: Target Certification
+          type: string
+          description: CNCF cert this lab covers
+          enum:
+            - CCA
+            - KCA
+            - ICA
+            - OTCA
+            - PCA
+            - CBA
+            - CNPE
+            - CNPA
+            - LFCS
+        description:
+          title: Description
+          type: string
+          description: One-line description of what this lab teaches
+        owner:
+          title: Owner
+          type: string
+          description: Team that owns this component
+          default: platform-team
+          ui:field: OwnerPicker
+          ui:options:
+            catalogFilter:
+              kind: Group
+
+  # Steps executed when the form is submitted
+  steps:
+    - id: fetch-base
+      name: Fetch Base Template
+      action: fetch:template
+      input:
+        url: ./skeleton
+        values:
+          name: ${{ parameters.name }}
+          cert: ${{ parameters.cert }}
+          description: ${{ parameters.description }}
+          owner: ${{ parameters.owner }}
+
+    - id: register
+      name: Register in Catalog
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps['fetch-base'].output.repoContentsUrl }}
+        catalogInfoPath: /catalog-info.yaml
+
+  output:
+    links:
+      - title: View in Catalog
+        icon: catalog
+        entityRef: ${{ steps['register'].output.entityRef }}

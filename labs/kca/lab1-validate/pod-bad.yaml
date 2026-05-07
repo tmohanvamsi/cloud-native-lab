@@ -1,0 +1,10 @@
+# This pod has NO resource limits — should be BLOCKED by Kyverno
+apiVersion: v1
+kind: Pod
+metadata:
+  name: bad-pod
+  namespace: kyverno-test
+spec:
+  containers:
+    - name: nginx
+      image: nginx:alpine

@@ -1,0 +1,14 @@
+# Pod with no labels — Kyverno should inject team=platform + env=lab
+apiVersion: v1
+kind: Pod
+metadata:
+  name: unlabeled-pod
+  namespace: kyverno-test
+spec:
+  containers:
+    - name: nginx
+      image: nginx:alpine
+      resources:
+        limits:
+          cpu: "200m"
+          memory: "128Mi"

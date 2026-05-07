@@ -257,16 +257,12 @@ kyverno-policies:
 # ─── BACKSTAGE (CBA) ─────────────────────────────────────────────────────────
 
 backstage-install:
-	@echo "Starting Backstage via Docker (no cluster resources needed)..."
-	docker run -d --name backstage \
-		-p 7007:7007 \
-		-e BACKSTAGE_BASE_URL=http://localhost:7007 \
-		ghcr.io/backstage/backstage:latest 2>/dev/null || \
-		docker start backstage
-	@echo "Backstage → http://localhost:7007 (takes ~60s to start)"
+	@echo "Opening official Backstage demo (pre-built image has plugin conflicts in local mode)"
+	@echo "Backstage demo → https://demo.backstage.io"
+	open https://demo.backstage.io
 
 backstage-ui:
-	open http://localhost:7007
+	open https://demo.backstage.io/catalog
 
 # ─── LINUX VM (LFCS) ─────────────────────────────────────────────────────────
 

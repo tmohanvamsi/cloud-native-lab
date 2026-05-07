@@ -1,0 +1,28 @@
+---
+# Self-signed ClusterIssuer — signs certs using its own CA (no external CA needed)
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: selfsigned
+spec:
+  selfSigned: {}
+---
+# Certificate — cert-manager watches this and creates a TLS Secret automatically
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: kyverno-lab-tls
+  namespace: kyverno-test
+spec:
+  secretName: kyverno-lab-tls
+  duration: 2160h      # 90 days
+  renewBefore: 360h    # renew 15 days before expiry — automatic
+  issuerRef:
+    name: selfsigned
+    kind: ClusterIssuer
+  dnsNames:
+    - kyverno-lab.kyverno-test.svc.cluster.local
+    - kyverno-lab.kyverno-test.svc
+  subject:
+    organizations:
+      - smartops-platform

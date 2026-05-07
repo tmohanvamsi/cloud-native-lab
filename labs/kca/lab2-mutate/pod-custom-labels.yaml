@@ -1,0 +1,16 @@
+# Pod with its own team label — Kyverno must NOT overwrite it (+ prefix = only if absent)
+apiVersion: v1
+kind: Pod
+metadata:
+  name: custom-labeled-pod
+  namespace: kyverno-test
+  labels:
+    team: "backend"
+spec:
+  containers:
+    - name: nginx
+      image: nginx:alpine
+      resources:
+        limits:
+          cpu: "200m"
+          memory: "128Mi"
