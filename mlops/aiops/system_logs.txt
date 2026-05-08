@@ -1,0 +1,87 @@
+2025-03-27 10:00:01 INFO  Application started successfully
+2025-03-27 10:00:15 INFO  Health check passed
+2025-03-27 10:00:30 INFO  Request processed: GET /health 200
+2025-03-27 10:00:45 INFO  Request processed: POST /predict 200
+2025-03-27 10:01:00 INFO  Health check passed
+2025-03-27 10:01:10 WARNING High memory usage detected: 78%
+2025-03-27 10:01:15 INFO  Request processed: GET /health 200
+2025-03-27 10:01:30 INFO  Request processed: POST /predict 200
+2025-03-27 10:01:45 INFO  Cache hit ratio: 94%
+2025-03-27 10:02:00 INFO  Health check passed
+2025-03-27 10:02:10 ERROR Failed to connect to database: timeout after 30s
+2025-03-27 10:02:11 ERROR Retry attempt 1/3 for database connection
+2025-03-27 10:02:12 ERROR Retry attempt 2/3 for database connection
+2025-03-27 10:02:13 ERROR Retry attempt 3/3 for database connection
+2025-03-27 10:02:14 CRITICAL Database connection pool exhausted
+2025-03-27 10:02:15 ERROR Request failed: POST /predict 503 service unavailable
+2025-03-27 10:02:16 ERROR Request failed: POST /predict 503 service unavailable
+2025-03-27 10:02:17 ERROR Request failed: GET /health 503 service unavailable
+2025-03-27 10:02:30 WARNING Falling back to read-only mode
+2025-03-27 10:02:45 INFO  Database reconnected successfully
+2025-03-27 10:03:00 INFO  Health check passed
+2025-03-27 10:03:15 INFO  Request processed: GET /health 200
+2025-03-27 10:03:30 INFO  Request processed: POST /predict 200
+2025-03-27 10:03:45 INFO  Request processed: POST /predict 200
+2025-03-27 10:04:00 INFO  Health check passed
+2025-03-27 10:04:15 INFO  Request processed: POST /predict 200
+2025-03-27 10:04:30 INFO  Cache hit ratio: 91%
+2025-03-27 10:05:00 INFO  Health check passed
+2025-03-27 10:05:10 WARNING CPU usage spike: 89%
+2025-03-27 10:05:15 WARNING CPU usage spike: 92%
+2025-03-27 10:05:20 ERROR Out of memory: killing process 4821
+2025-03-27 10:05:21 ERROR Out of memory: killing process 4822
+2025-03-27 10:05:22 CRITICAL Node memory pressure: evicting pods
+2025-03-27 10:05:23 ERROR Pod iris-model-abc123 evicted
+2025-03-27 10:05:24 ERROR Pod iris-model-def456 evicted
+2025-03-27 10:05:30 WARNING Kubernetes scheduler: insufficient resources
+2025-03-27 10:05:45 INFO  Pod rescheduled on node cloudnative-worker2
+2025-03-27 10:06:00 INFO  Health check passed
+2025-03-27 10:06:15 INFO  Request processed: POST /predict 200
+2025-03-27 10:06:30 INFO  Request processed: POST /predict 200
+2025-03-27 10:07:00 INFO  Health check passed
+2025-03-27 10:07:15 INFO  Request processed: GET /health 200
+2025-03-27 10:08:00 INFO  Health check passed
+2025-03-27 10:08:30 INFO  Request processed: POST /predict 200
+2025-03-27 10:09:00 INFO  Health check passed
+2025-03-27 10:09:15 INFO  Metrics scraped by Prometheus
+2025-03-27 10:10:00 INFO  Health check passed
+2025-03-27 10:10:10 ERROR Disk usage critical: /var/log 95% full
+2025-03-27 10:10:11 ERROR Log rotation failed: permission denied
+2025-03-27 10:10:12 ERROR Unable to write to disk: no space left
+2025-03-27 10:10:13 CRITICAL Storage volume full — writes failing
+2025-03-27 10:10:14 ERROR Request failed: POST /predict 500 internal error
+2025-03-27 10:10:15 ERROR Request failed: POST /predict 500 internal error
+2025-03-27 10:10:16 ERROR Request failed: POST /predict 500 internal error
+2025-03-27 10:10:30 WARNING Switched to in-memory logging
+2025-03-27 10:10:45 INFO  Emergency disk cleanup completed, freed 2.1GB
+2025-03-27 10:11:00 INFO  Health check passed
+2025-03-27 10:11:15 INFO  Request processed: POST /predict 200
+2025-03-27 10:11:30 INFO  Request processed: POST /predict 200
+2025-03-27 10:12:00 INFO  Health check passed
+2025-03-27 10:12:15 INFO  Metrics scraped by Prometheus
+2025-03-27 10:13:00 INFO  Health check passed
+2025-03-27 10:13:30 INFO  Request processed: POST /predict 200
+2025-03-27 10:14:00 INFO  Health check passed
+2025-03-27 10:15:00 INFO  Health check passed
+2025-03-27 10:15:10 WARNING TLS certificate expires in 14 days
+2025-03-27 10:15:15 INFO  Request processed: POST /predict 200
+2025-03-27 10:16:00 INFO  Health check passed
+2025-03-27 10:17:00 INFO  Health check passed
+2025-03-27 10:18:00 INFO  Health check passed
+2025-03-27 10:18:15 INFO  Request processed: POST /predict 200
+2025-03-27 10:19:00 INFO  Health check passed
+2025-03-27 10:20:00 INFO  Health check passed
+2025-03-27 10:20:05 ERROR Authentication failure for user admin from 192.168.1.100
+2025-03-27 10:20:06 ERROR Authentication failure for user admin from 192.168.1.100
+2025-03-27 10:20:07 ERROR Authentication failure for user admin from 192.168.1.100
+2025-03-27 10:20:08 ERROR Authentication failure for user admin from 192.168.1.100
+2025-03-27 10:20:09 ERROR Authentication failure for user admin from 192.168.1.100
+2025-03-27 10:20:10 CRITICAL Brute force attack detected from 192.168.1.100 — blocking IP
+2025-03-27 10:20:15 WARNING Rate limiting applied to 192.168.1.100
+2025-03-27 10:20:30 INFO  Security event logged to SIEM
+2025-03-27 10:21:00 INFO  Health check passed
+2025-03-27 10:21:15 INFO  Request processed: POST /predict 200
+2025-03-27 10:22:00 INFO  Health check passed
+2025-03-27 10:22:15 INFO  Metrics scraped by Prometheus
+2025-03-27 10:23:00 INFO  Health check passed
+2025-03-27 10:23:10 INFO  Request processed: POST /predict 200

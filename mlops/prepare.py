@@ -4,7 +4,7 @@ import pandas as pd
 from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
 
-with open("mlops/params.yaml") as f:
+with open(os.path.join(os.path.dirname(__file__), "params.yaml")) as f:
     params = yaml.safe_load(f)
 
 data_params = params["data"]

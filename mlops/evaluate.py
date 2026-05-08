@@ -4,7 +4,8 @@ import yaml
 import pandas as pd
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 
-with open("mlops/params.yaml") as f:
+import os
+with open(os.path.join(os.path.dirname(__file__), "params.yaml")) as f:
     params = yaml.safe_load(f)
 
 dp = params["data"]

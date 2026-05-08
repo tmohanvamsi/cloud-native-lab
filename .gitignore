@@ -28,6 +28,20 @@ mlops/.dvc/cache/
 .dvc/cache/
 .dvc/tmp/
 
+# Python virtualenvs
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# DVC internals (init files are committed, runtime files are not)
+.dvc/tmp/
+.dvc/cache/
+mlops/dvc.lock
+
 # OS
 .DS_Store
 Thumbs.db

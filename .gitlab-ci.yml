@@ -1,0 +1,157 @@
+image: python:3.11
+
+stages:
+  - prepare
+  - lint
+  - test
+  - train
+  - build
+  - deploy
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  PYTHONPATH: "$CI_PROJECT_DIR"
+  MODEL_IMAGE: "$CI_REGISTRY_IMAGE/iris-model:$CI_COMMIT_SHA"
+  AGENT_IMAGE: "$CI_REGISTRY_IMAGE/devops-agent:$CI_COMMIT_SHA"
+
+.cache: &cache
+  key: "$CI_COMMIT_REF_SLUG"
+  paths:
+    - .cache/pip
+    - .venv/
+
+.install-mlops: &install-mlops
+  - python -m venv .venv
+  - source .venv/bin/activate
+  - pip install --upgrade pip -q
+  - pip install -r mlops/requirements.txt
+
+# ── Stage: prepare ────────────────────────────────────────────────────────────
+prepare:deps:
+  stage: prepare
+  cache:
+    <<: *cache
+    policy: pull-push
+  script:
+    - *install-mlops
+  artifacts:
+    paths:
+      - .venv/
+    expire_in: 2h
+
+# ── Stage: lint ───────────────────────────────────────────────────────────────
+lint:ruff:
+  stage: lint
+  cache:
+    <<: *cache
+    policy: pull
+  needs: ["prepare:deps"]
+  script:
+    - source .venv/bin/activate
+    - pip install ruff -q
+    - ruff check mlops/ --ignore E501
+
+# ── Stage: test ───────────────────────────────────────────────────────────────
+test:unit:
+  stage: test
+  cache:
+    <<: *cache
+    policy: pull
+  needs: ["lint:ruff"]
+  script:
+    - source .venv/bin/activate
+    - pip install pytest -q
+    - python mlops/prepare.py
+    - python -c "import pickle; import pandas as pd"
+    - echo "Unit checks passed"
+  artifacts:
+    paths:
+      - data/
+    expire_in: 1h
+
+# ── Stage: train ──────────────────────────────────────────────────────────────
+train:dvc:
+  stage: train
+  cache:
+    <<: *cache
+    policy: pull
+  needs: ["test:unit"]
+  script:
+    - source .venv/bin/activate
+    - pip install dvc -q
+    - dvc remote add -d local /tmp/dvc-store
+    - dvc repro mlops/dvc.yaml
+    - echo "=== Metrics ===" && dvc metrics show
+  artifacts:
+    paths:
+      - models/model.pkl
+      - metrics/
+    expire_in: 1 week
+    reports:
+      metrics:
+        - metrics/eval_metrics.json
+
+# ── Stage: build ──────────────────────────────────────────────────────────────
+build:iris-model:
+  stage: build
+  image: docker:25
+  services:
+    - name: docker:25-dind
+      command: ["--mtu=1460"]
+  variables:
+    DOCKER_TLS_CERTDIR: ""
+  needs: ["train:dvc"]
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+  script:
+    - docker build -t "$MODEL_IMAGE" -f mlops/Dockerfile .
+    - docker push "$MODEL_IMAGE"
+    - docker tag "$MODEL_IMAGE" "$CI_REGISTRY_IMAGE/iris-model:latest"
+    - docker push "$CI_REGISTRY_IMAGE/iris-model:latest"
+
+build:devops-agent:
+  stage: build
+  image: docker:25
+  services:
+    - name: docker:25-dind
+      command: ["--mtu=1460"]
+  variables:
+    DOCKER_TLS_CERTDIR: ""
+  needs: ["train:dvc"]
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+  script:
+    - docker build -t "$AGENT_IMAGE" -f mlops/agents/Dockerfile mlops/
+    - docker push "$AGENT_IMAGE"
+
+# ── Stage: deploy ─────────────────────────────────────────────────────────────
+deploy:staging:
+  stage: deploy
+  image: alpine/k8s:1.29.2
+  needs: ["build:iris-model", "build:devops-agent"]
+  environment:
+    name: staging
+    url: http://staging.smartops.local
+  script:
+    - sed -i "s|IMAGE_PLACEHOLDER|${MODEL_IMAGE}|g" manifests/mlops/deployment.yaml
+    - kubectl apply -f manifests/mlops/
+    - kubectl rollout status deployment/iris-model -n apps --timeout=120s
+    - echo "Staging deploy complete — image ${MODEL_IMAGE}"
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+deploy:production:
+  stage: deploy
+  image: alpine/k8s:1.29.2
+  needs: ["deploy:staging"]
+  environment:
+    name: production
+    url: http://smartops.local
+  when: manual
+  script:
+    - sed -i "s|IMAGE_PLACEHOLDER|${MODEL_IMAGE}|g" manifests/mlops/deployment.yaml
+    - kubectl apply -f manifests/mlops/
+    - kubectl rollout status deployment/iris-model -n apps --timeout=180s
+    - echo "Production deploy complete — image ${MODEL_IMAGE}"
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'

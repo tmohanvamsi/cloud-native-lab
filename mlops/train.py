@@ -6,7 +6,7 @@ import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 
-with open("mlops/params.yaml") as f:
+with open(os.path.join(os.path.dirname(__file__), "params.yaml")) as f:
     params = yaml.safe_load(f)
 
 mp = params["model"]
