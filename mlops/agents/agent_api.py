@@ -25,7 +25,7 @@ def ask(query: Query):
     """Send a DevOps question to the LLM and get an answer."""
     client = ollama.Client(host=OLLAMA_HOST)
     response = client.chat(
-        model="llama3",
+        model="llama3.2",
         messages=[
             {
                 "role": "system",

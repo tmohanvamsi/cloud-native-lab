@@ -6,7 +6,7 @@ Usage:  python mlops/ai-tools/prompt_engineering.py
 import ollama
 
 CLIENT = ollama.Client(host="http://localhost:11434")
-MODEL  = "llama3"
+MODEL  = "llama3.2"
 
 
 def ask(prompt: str, label: str) -> str:

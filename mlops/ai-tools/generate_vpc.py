@@ -8,7 +8,7 @@ import argparse
 import ollama
 
 CLIENT = ollama.Client(host="http://localhost:11434")
-MODEL  = "llama3"
+MODEL  = "llama3.2"
 
 
 def generate_vpc_script(env: str, cidr: str, region: str) -> str:

@@ -61,7 +61,7 @@ def explain_with_ollama(row: pd.Series) -> str:
         message=row["message"],
     )
     response = ollama.chat(
-        model="llama3",
+        model="llama3.2",
         messages=[{"role": "user", "content": prompt}],
     )
     return response["message"]["content"].strip()

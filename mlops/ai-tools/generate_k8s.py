@@ -14,7 +14,7 @@ Include:
 
 def generate_k8s(app_type: str, name: str, image: str, port: str) -> str:
     response = ollama.chat(
-        model="llama3",
+        model="llama3.2",
         messages=[{
             "role": "user",
             "content": PROMPT.format(

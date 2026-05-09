@@ -22,7 +22,7 @@ parser.add_argument("--pdf", default=None, help="Path to PDF documentation file"
 args, _ = parser.parse_known_args()
 
 # ── LLM (local Ollama — no API key needed) ───────────────────────────────────
-llm = Ollama(model="llama3", base_url="http://localhost:11434")
+llm = Ollama(model="llama3.2", base_url="http://localhost:11434")
 
 # ── Tools ─────────────────────────────────────────────────────────────────────
 log_reader = FileReadTool(file_path="mlops/aiops/system_logs.txt")

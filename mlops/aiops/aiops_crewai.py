@@ -10,15 +10,17 @@ Agents:
 
 Usage:  python mlops/aiops/aiops_crewai.py
 """
+import os
 from crewai import Agent, Task, Crew, Process
 from crewai_tools import FileReadTool
 from langchain_community.llms import Ollama
 
 # ── LLM ───────────────────────────────────────────────────────────────────────
-llm = Ollama(model="llama3", base_url="http://localhost:11434")
+llm = Ollama(model="llama3.2", base_url="http://localhost:11434")
 
 # ── Tools ─────────────────────────────────────────────────────────────────────
-log_reader = FileReadTool(file_path="mlops/aiops/system_logs.txt")
+_LOG_FILE = os.path.join(os.path.dirname(__file__), "system_logs.txt")
+log_reader = FileReadTool(file_path=_LOG_FILE)
 
 # ── Agent 1: Log Scanner ───────────────────────────────────────────────────────
 log_scanner = Agent(
@@ -139,7 +141,7 @@ if __name__ == "__main__":
     print("="*70)
     print(result)
 
-    output_path = "mlops/aiops/incident_playbook.md"
+    output_path = os.path.join(os.path.dirname(__file__), "incident_playbook.md")
     with open(output_path, "w") as f:
         f.write(str(result))
     print(f"\nPlaybook saved to {output_path}")

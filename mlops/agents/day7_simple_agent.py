@@ -68,7 +68,7 @@ def agent_loop(user_query: str) -> None:
     ]
 
     for step in range(5):  # max 5 iterations to prevent infinite loops
-        response = ollama.chat(model="llama3", messages=messages)
+        response = ollama.chat(model="llama3.2", messages=messages)
         content  = response["message"]["content"].strip()
 
         # Try to parse as tool call
